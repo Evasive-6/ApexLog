@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: apexlog-hos-engine
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true

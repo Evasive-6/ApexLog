@@ -1,0 +1,13 @@
+{
+  "name": "apexlog-hos-fullstack",
+  "version": "1.0.0",
+  "description": "Full-Stack FMCSA Hours of Service (HOS) Route Planner & ELD Daily Log Generator",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && python manage.py runserver 0.0.0.0:8000"
+  },
+  "keywords": ["fmcsa", "hos", "eld", "django", "react", "trucking", "dispatch"],
+  "author": "ApexLog Team",
+  "license": "MIT"
+}

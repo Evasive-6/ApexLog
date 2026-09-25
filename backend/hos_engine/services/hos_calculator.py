@@ -32,7 +32,11 @@ class HOSCalculator:
             now = datetime.now()
             self.start_datetime = datetime(now.year, now.month, now.day, 6, 0, 0)
         else:
-            self.start_datetime = start_datetime
+            # Strip timezone info if present to keep all internal simulation calculations offset-naive
+            if hasattr(start_datetime, "tzinfo") and start_datetime.tzinfo is not None:
+                self.start_datetime = start_datetime.replace(tzinfo=None)
+            else:
+                self.start_datetime = start_datetime
 
         self.driver_name = driver_name
         self.carrier_name = carrier_name
@@ -42,11 +46,8 @@ class HOSCalculator:
         self.shipping_doc = shipping_doc
         self.commodity = commodity
 
-        # Continuous event log
         self.events = []
-        # Timeline stops for map & itinerary
         self.stops = []
-        # Daily logs partitioned 00:00 to 24:00
         self.daily_logs = []
 
     def run_simulation(self):
@@ -54,21 +55,18 @@ class HOSCalculator:
         if len(legs) == 0:
             return self._build_empty_response()
 
-        leg1 = legs[0]  # Current -> Pickup
+        leg1 = legs[0]
         leg2 = legs[1] if len(legs) > 1 else {"distance_miles": 0, "coordinates": [], "to_name": self.dropoff_loc["name"]}
 
         full_coords = self.route_data.get("full_coordinates", [])
         total_trip_miles = self.route_data.get("total_distance_miles", 0.0)
 
-        # Simulation trackers
         curr_time = self.start_datetime
-        # Midnight of start day
         day_start_midnight = datetime(curr_time.year, curr_time.month, curr_time.day, 0, 0, 0)
 
-        # Record Initial Off-Duty from Midnight to 06:00 AM
         if curr_time > day_start_midnight:
             self.events.append({
-                "status": 1,  # Off Duty
+                "status": 1,
                 "status_label": "Off Duty",
                 "start_time": day_start_midnight,
                 "end_time": curr_time,
@@ -79,11 +77,10 @@ class HOSCalculator:
                 "odometer_end": 0.0
             })
 
-        # Pre-trip inspection: 15 mins On-Duty Not Driving
-        pre_trip_duration = 0.25  # 15 minutes
+        pre_trip_duration = 0.25
         pre_trip_end = curr_time + timedelta(hours=pre_trip_duration)
         self.events.append({
-            "status": 4,  # On Duty Not Driving
+            "status": 4,
             "status_label": "On Duty (Not Driving)",
             "start_time": curr_time,
             "end_time": pre_trip_end,
@@ -110,14 +107,12 @@ class HOSCalculator:
         curr_time = pre_trip_end
         current_odometer = 0.0
 
-        # HOS Clocks
         shift_driving_hours = 0.0
-        shift_duty_window_hours = pre_trip_duration  # window started with pre-trip
+        shift_duty_window_hours = pre_trip_duration
         driving_since_break = 0.0
         miles_since_fuel = 0.0
         cycle_used = self.current_cycle_used + pre_trip_duration
 
-        # Helper to handle driving a specific leg
         def simulate_drive(target_miles, destination_name, destination_coords, is_to_pickup=False):
             nonlocal curr_time, current_odometer, shift_driving_hours, shift_duty_window_hours
             nonlocal driving_since_break, miles_since_fuel, cycle_used

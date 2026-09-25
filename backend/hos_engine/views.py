@@ -26,7 +26,6 @@ class CalculateTripView(APIView):
             pickup_loc_str = request.data.get("pickup_location", "").strip()
             dropoff_loc_str = request.data.get("dropoff_location", "").strip()
             
-            # Default to 0.0 if not provided
             try:
                 cycle_used = float(request.data.get("current_cycle_used", 0.0))
             except (ValueError, TypeError):
@@ -38,7 +37,6 @@ class CalculateTripView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Metadata options
             driver_name = request.data.get("driver_name", "John E. Doe")
             carrier_name = request.data.get("carrier_name", "Apex Freight Logistics LLC")
             truck_number = request.data.get("truck_number", "TRK-4421 / TRL-8809")
@@ -52,25 +50,23 @@ class CalculateTripView(APIView):
             if dep_time_str:
                 try:
                     start_dt = datetime.fromisoformat(dep_time_str.replace("Z", "+00:00"))
+                    if start_dt.tzinfo is not None:
+                        start_dt = start_dt.replace(tzinfo=None)
                 except Exception:
                     start_dt = None
 
-            # 1. Geocode locations
             current_geo = geocode_location(current_loc_str)
             pickup_geo = geocode_location(pickup_loc_str)
             dropoff_geo = geocode_location(dropoff_loc_str)
 
-            # 2. Build waypoints
             waypoints = [
                 {"name": current_geo.get("name", current_loc_str), "lat": current_geo["lat"], "lng": current_geo["lng"]},
                 {"name": pickup_geo.get("name", pickup_loc_str), "lat": pickup_geo["lat"], "lng": pickup_geo["lng"]},
                 {"name": dropoff_geo.get("name", dropoff_loc_str), "lat": dropoff_geo["lat"], "lng": dropoff_geo["lng"]}
             ]
 
-            # 3. Route calculation
             route_data = get_route_between_waypoints(waypoints)
 
-            # 4. HOS simulation
             calculator = HOSCalculator(
                 current_loc=current_geo,
                 pickup_loc=pickup_geo,

@@ -70,3 +70,18 @@ class HOSCalculatorTestCase(TestCase):
         res = calc.run_simulation()
         fuel_stops = [s for s in res["stops"] if s["stop_type"] == "FUEL"]
         self.assertGreaterEqual(len(fuel_stops), 2)
+
+    def test_timezone_aware_start_datetime_handled_gracefully(self):
+        from datetime import timezone
+        aware_dt = datetime.now(timezone.utc)
+        calc = HOSCalculator(
+            current_loc={"name": "Chicago, IL", "lat": 41.8781, "lng": -87.6298},
+            pickup_loc={"name": "Indianapolis, IN", "lat": 39.7684, "lng": -86.1581},
+            dropoff_loc={"name": "Columbus, OH", "lat": 39.9612, "lng": -82.9988},
+            route_data=self.mock_route_short,
+            current_cycle_used=10.0,
+            start_datetime=aware_dt
+        )
+        res = calc.run_simulation()
+        self.assertIn("stops", res)
+        self.assertIn("daily_logs", res)

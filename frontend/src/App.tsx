@@ -55,7 +55,6 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [presets, setPresets] = useState<PresetTrip[]>(DEFAULT_PRESETS);
 
-  // Fetch presets on mount
   useEffect(() => {
     fetch(`${API_BASE}/presets/`)
       .then((res) => (res.ok ? res.json() : null))
@@ -64,11 +63,8 @@ export function App() {
           setPresets(data.presets);
         }
       })
-      .catch(() => {
-        // Fallback to DEFAULT_PRESETS
-      });
+      .catch(() => {});
 
-    // Auto-calculate default trip on initial load
     handleCalculate({
       current_location: "Dallas, TX",
       pickup_location: "Atlanta, GA",

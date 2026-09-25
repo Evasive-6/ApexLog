@@ -15,14 +15,14 @@ const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY || "cb1_3y26_1_6b1e4ed7
 const MAP_STYLES: Record<MapStyle, { name: string; url: string; subdomains?: string; maxZoom: number; attribution: string }> = {
   dark: {
     name: "Dark Dispatch",
-    url: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}`,
+    url: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}&api_key=${CARTO_API_KEY}`,
     subdomains: "abcd",
     maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   streets: {
     name: "Streets",
-    url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}`,
+    url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}&api_key=${CARTO_API_KEY}`,
     subdomains: "abcd",
     maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -41,7 +41,6 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const [currentStyle, setCurrentStyle] = useState<MapStyle>("dark");
 
-  // Switch tile layer when style changes
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     
@@ -62,13 +61,11 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Cleanup previous map instance if exists
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
     }
 
-    // Default center (USA center)
     const map = L.map(mapContainerRef.current, {
       zoomControl: true,
       attributionControl: true,
@@ -76,7 +73,6 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
 
     mapInstanceRef.current = map;
 
-    // High performance, unblocked CARTO Basemap tiles
     const cfg = MAP_STYLES[currentStyle];
     const tileLayer = L.tileLayer(cfg.url, {
       subdomains: cfg.subdomains || "abc",
@@ -87,18 +83,15 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
 
     const bounds = L.latLngBounds([]);
 
-    // Draw route polyline if coordinates available
     if (route.coordinates && route.coordinates.length > 0) {
       const latLngs: L.LatLngExpression[] = route.coordinates.map((pt) => [pt[0], pt[1]]);
       
-      // Shadow / outline line
       L.polyline(latLngs, {
         color: "#1e3a8a",
         weight: 7,
         opacity: 0.6,
       }).addTo(map);
 
-      // Core route line
       L.polyline(latLngs, {
         color: "#3b82f6",
         weight: 4,
@@ -109,9 +102,8 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
       route.coordinates.forEach((pt) => bounds.extend([pt[0], pt[1]]));
     }
 
-    // Stop icon color and badge generator
     const getMarkerIcon = (stopType: string, label: string) => {
-      let bg = "#10b981"; // emerald
+      let bg = "#10b981";
       let border = "#059669";
       let text = "Start";
 
@@ -179,7 +171,6 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
       });
     };
 
-    // Add Stop Markers
     stops.forEach((stop, idx) => {
       bounds.extend([stop.lat, stop.lng]);
 

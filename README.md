@@ -9,7 +9,6 @@
 
 - **Live Web Application:** [ApexLog Live on Render / Vercel](https://apexlog-hos-engine.onrender.com/) *(or run locally via 1 command)*
 - **GitHub Repository:** [github.com/apexlog-hos-engine](https://github.com)
-- **3-5 Minute Loom Video Walkthrough Script:** See [Loom Walkthrough Script](#-3-5-minute-loom-video-walkthrough-script) below.
 
 ---
 
@@ -135,49 +134,6 @@ Click any of the **Quick Test Scenarios** in the UI:
 
 ---
 
-## 🎙️ 3-5 Minute Loom Video Walkthrough Script
-
-Use this structured script to record your Loom video:
-
-### [0:00 - 0:45] Introduction & Requirements Overview
-- *"Hi everyone, this is a demonstration of ApexLog, a full-stack web application built using Django REST Framework and React with TypeScript for commercial truck dispatch and FMCSA Hours of Service (HOS) compliance."*
-- *"The objective is to take in the driver's current location, pickup location, dropoff location, and current cycle hours used under the 70-hour / 8-day rule. The app calculates the route using free map APIs and generates authentic FMCSA 24-hour daily ELD log sheets."*
-
-### [0:45 - 1:45] Live Demo: Route Calculation & Map Visualization
-- *"Let's test our first scenario: a coast-to-coast run from Dallas, Texas, picking up freight in Atlanta, Georgia, and delivering to New York City with 15 hours already used on the 70-hour cycle."*
-- Click **"Calculate Route & Draw ELD Daily Logs"**.
-- *"Notice how quickly the response loads. The interactive Leaflet map displays the full route polyline with custom-color waypoints:"*
-  - **Green pin:** Departure origin in Dallas
-  - **Blue pin:** Cargo pickup in Atlanta (with 1-hour loading)
-  - **Orange pin:** Mandatory diesel fueling stop (occurring within the 1,000-mile requirement)
-  - **Purple pin:** 10-hour mandatory sleeper berth rest periods
-  - **Red pin:** Final delivery in New York (with 1-hour unloading)
-- Show the metric cards: Total miles (1,645.8 mi), driving hours (29.9 hrs), on-duty time (33.4 hrs), and the 70-hour cycle gauge.
-
-### [1:45 - 3:15] The Core Deliverable: FMCSA 24-Hour ELD Daily Log Sheets
-- Scroll down to the **Driver's Daily Log (RODS)** section.
-- *"Here is the signature deliverable: the FMCSA Driver's Daily Log sheet, rendered with crisp vector SVG based on official DOT regulations (49 CFR § 395.8)."*
-- Point out key details:
-  - Header: Date, Carrier Name, Vehicle numbers, Miles driving today, Driver signature certification.
-  - The 24-Hour Graph Grid: 4 distinct rows: 1. Off Duty, 2. Sleeper Berth, 3. Driving, 4. On Duty (Not Driving).
-  - The continuous blue step-line accurately tracking duty changes with vertical transitions.
-  - The right-hand column: Total hours for each status line, summing exactly to **24.0 hours**.
-  - Show the day tabs: *"Because this trip spans 3 calendar days, the engine cleanly partitions the logs at midnight (00:00 to 24:00). We can tab between Day 1, Day 2, and Day 3, or toggle 'View All Sheets'."*
-  - Point to the Remarks section: Time-standard remarks with city, state, and activity.
-  - Point to the 70-hour recap table at the bottom showing hours today, cumulative 8-day hours, and available hours tomorrow.
-- Click **"Print / Export Logs"** to show the clean print-ready layout for roadside DOT inspections or PDF export.
-
-### [3:15 - 4:15] Codebase Architecture & HOS Engine
-- Switch to the IDE / code view:
-  - `backend/hos_engine/services/hos_calculator.py`: Walk through the continuous simulation loop enforcing the 11-hour driving cap, 14-hour duty window, 30-min break rule, 1,000-mile fueling intervals, and midnight-to-midnight partitioning.
-  - `backend/hos_engine/services/routing.py` & `geocoding.py`: Explain the OSRM integration with resilient fallbacks and caching.
-  - `frontend/src/components/EldLogSheet.tsx`: Show how the SVG coordinate math renders the exact graph grid and step lines.
-- Demonstrate the **34-Hour Restart Stress Test** preset to prove that when cycle hours reach 70.0, the engine automatically schedules a 34-hour restart.
-
-### [4:15 - 4:45] Conclusion & Live Hosting
-- *"The app is fully responsive, containerized with Docker, deployable to Render / Vercel, and 100% compliant with FMCSA safety standards. Thank you!"*
-
----
 
 ## 🚢 Deployment Guide
 

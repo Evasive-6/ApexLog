@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import type { RouteData, Stop } from "../types";
 import { Map, Layers, Navigation } from "lucide-react";
@@ -8,9 +8,54 @@ interface TripMapProps {
   stops: Stop[];
 }
 
+type MapStyle = "dark" | "streets" | "satellite";
+
+const MAP_STYLES: Record<MapStyle, { name: string; url: string; subdomains?: string; maxZoom: number; attribution: string }> = {
+  dark: {
+    name: "Dark Dispatch",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    subdomains: "abcd",
+    maxZoom: 20,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+  streets: {
+    name: "Streets",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    subdomains: "abcd",
+    maxZoom: 20,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+  satellite: {
+    name: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    maxZoom: 19,
+    attribution: 'Tiles &copy; Esri, Maxar, Earthstar Geographics',
+  },
+};
+
 export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const [currentStyle, setCurrentStyle] = useState<MapStyle>("dark");
+
+  // Switch tile layer when style changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+
+    const cfg = MAP_STYLES[currentStyle];
+    const newTile = L.tileLayer(cfg.url, {
+      subdomains: cfg.subdomains || "abc",
+      maxZoom: cfg.maxZoom,
+      attribution: cfg.attribution,
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newTile;
+  }, [currentStyle]);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -29,11 +74,14 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
 
     mapInstanceRef.current = map;
 
-    // Dark-themed or standard clean OpenStreetMap tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    // High performance, unblocked CARTO Basemap tiles
+    const cfg = MAP_STYLES[currentStyle];
+    const tileLayer = L.tileLayer(cfg.url, {
+      subdomains: cfg.subdomains || "abc",
+      maxZoom: cfg.maxZoom,
+      attribution: cfg.attribution,
     }).addTo(map);
+    tileLayerRef.current = tileLayer;
 
     const bounds = L.latLngBounds([]);
 
@@ -49,7 +97,7 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
       }).addTo(map);
 
       // Core route line
-      const polyline = L.polyline(latLngs, {
+      L.polyline(latLngs, {
         color: "#3b82f6",
         weight: 4,
         opacity: 0.95,
@@ -190,27 +238,44 @@ export const TripMap: React.FC<TripMapProps> = ({ route, stops }) => {
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-      <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+      <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-900/80">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-blue-400" />
           <h3 className="text-sm font-bold text-white m-0">Interactive Route & Stop Waypoints</h3>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Origin
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Pickup
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> Fuel
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> 10h Rest
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Dropoff
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/60 text-xs">
+            {(["dark", "streets", "satellite"] as MapStyle[]).map((style) => (
+              <button
+                key={style}
+                onClick={() => setCurrentStyle(style)}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  currentStyle === style
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                }`}
+              >
+                {MAP_STYLES[style].name}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Origin
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Pickup
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> Fuel
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> 10h Rest
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Dropoff
+            </span>
+          </div>
         </div>
       </div>
       <div ref={mapContainerRef} className="w-full h-[420px] z-10" />

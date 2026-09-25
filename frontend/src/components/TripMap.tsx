@@ -10,17 +10,19 @@ interface TripMapProps {
 
 type MapStyle = "dark" | "streets" | "satellite";
 
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY || "cb1_3y26_1_6b1e4ed7ee52899cd5f42917";
+
 const MAP_STYLES: Record<MapStyle, { name: string; url: string; subdomains?: string; maxZoom: number; attribution: string }> = {
   dark: {
     name: "Dark Dispatch",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    url: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}`,
     subdomains: "abcd",
     maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   streets: {
     name: "Streets",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${CARTO_API_KEY}`,
     subdomains: "abcd",
     maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
